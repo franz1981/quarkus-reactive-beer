@@ -1,7 +1,6 @@
 package redhat.perf;
 
 import io.smallrye.mutiny.Uni;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -12,8 +11,11 @@ import java.util.List;
 @Path("/beer")
 public class BeerResource {
 
-    @Inject
-    BeerRepository beerRepository;
+    private final BeerRepository beerRepository;
+
+    public BeerResource(BeerRepository beerRepository) {
+        this.beerRepository = beerRepository;
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
