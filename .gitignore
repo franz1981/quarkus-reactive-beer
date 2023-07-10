@@ -40,3 +40,8 @@ nb-configuration.xml
 
 # Plugin directory
 /.quarkus/cli/plugins/
+
+# Profiling
+*.iprof
+*.perf
+*.data
