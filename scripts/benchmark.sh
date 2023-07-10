@@ -59,9 +59,12 @@ Help()
    echo ""
    echo "-p    if specified, run perf stat together with the selected profiler. Only GNU Linux."
    echo "      disabled by default"
+   echo ""
+   echo "-r    if specified, run perf record. Only GNU Linux. Needs an image build with -g."
+   echo "      disabled by default"
 }
 
-while getopts "hu:e:f:d:t:c:pna" option; do
+while getopts "hu:e:f:d:t:c:prna" option; do
    case $option in
       h) Help
          exit;;
@@ -78,6 +81,8 @@ while getopts "hu:e:f:d:t:c:pna" option; do
       c) CONNECTIONS=${OPTARG}
          ;;
       p) PERF=true
+         ;;
+      r) RECORD=true
          ;;
       n) NATIVE=true
          ;;
@@ -141,6 +146,12 @@ if [ "${PERF}" = true ]; then
   stat_pid=$!
 fi
 
+if [ "${RECORD}" = true ]; then
+  echo "----- Collecting perf record on $quarkus_pid"
+  perf record -F 999 -p $quarkus_pid -g &
+  stat_pid=$!
+fi
+
 echo "----- Showing stats for $WARMUP seconds"
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
@@ -171,3 +182,8 @@ wait $wrk_pid
 echo "----- Profiling and workload completed: killing server"
 
 kill -SIGTERM $quarkus_pid
+
+if [ "${RECORD}" = true ]; then
+  sleep 1
+  perf script -F +pid > ./firefox.perf
+fi
