@@ -2,7 +2,7 @@
 
 HYPERFOIL_HOME=./hyperfoil
 
-URL=beer
+URL=greeting
 
 DURATION=40
 
@@ -148,7 +148,8 @@ fi
 
 if [ "${RECORD}" = true ]; then
   echo "----- Collecting perf record on $quarkus_pid"
-  perf record -F 999 -p $quarkus_pid -g &
+  # --call-graph dwarf should be able to collect inlined frames as well
+  perf record -e cpu-clock -g -F 100 -p $quarkus_pid &
   stat_pid=$!
 fi
 
@@ -187,3 +188,6 @@ if [ "${RECORD}" = true ]; then
   sleep 1
   perf script -F +pid > ./firefox.perf
 fi
+
+# to produce the flamegraph in svg format
+# perf script -i perf.data | ~/FlameGraph/stackcollapse-perf.pl | ~/FlameGraph/flamegraph.pl > flamegraph_g.svg

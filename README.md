@@ -47,6 +47,20 @@ You can then execute your native executable with: `./target/quarkus-reactive-bee
 
 If you want to learn more about building native executables, please consult https://quarkus.io/guides/maven-tooling.
 
+If you want to profile/debug the application is native mode via `perf record --call-graph dwarf` is required to compile it with debug symbols:
+
+```shell script
+./mvnw package -Dnative -Dquarkus.native.additional-build-args=-H:-DeleteLocalSymbols,-H:-OmitInlinedMethodDebugLineInfo -Dquarkus.native.debug.enabled
+```
+
+if instead we want to use the frame pointer i.e. `perf record -g`:
+
+```shell script
+./mvnw package -Dnative -Dquarkus.native.additional-build-args=-H:-DeleteLocalSymbols,-H:-OmitInlinedMethodDebugLineInfo,-H:+PreserveFramePointer -Dquarkus.native.debug.enabled
+```
+
+In both cass `-H:-DeleteLocalSymbols` is required.
+
 ## How to benchmark it
 
 Got into the `script` folder and type:
