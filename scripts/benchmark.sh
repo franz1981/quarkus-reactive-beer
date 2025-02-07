@@ -23,6 +23,8 @@ AP=false
 
 NATIVE=false
 
+STARTUP=false
+
 Help()
 {
    # Display Help
@@ -62,9 +64,12 @@ Help()
    echo ""
    echo "-r    if specified, run perf record. Only GNU Linux. Needs an image build with -g."
    echo "      disabled by default"
+   echo ""
+   echo "-s    if specified, run the application and profile it at startup only."
+   echo "      disabled by default"
 }
 
-while getopts "hu:e:f:d:t:c:prna" option; do
+while getopts "hu:e:f:d:t:c:prnas" option; do
    case $option in
       h) Help
          exit;;
@@ -87,6 +92,8 @@ while getopts "hu:e:f:d:t:c:prna" option; do
       n) NATIVE=true
          ;;
       a) AP=true
+         ;;
+      s) STARTUP=true
          ;;
    esac
 done
@@ -114,6 +121,11 @@ trap 'echo "cleaning up quarkus process";kill ${quarkus_pid}' SIGINT SIGTERM SIG
 
 if [ "${NATIVE}" = true ]; then
   ../target/quarkus-reactive-beer-1.0.0-SNAPSHOT-runner -Dquarkus.vertx.event-loops-pool-size=${THREADS} &
+elif [ "${STARTUP}" = true ]; then
+  timeout 3s perf record -e cycles -F 10000 --call-graph dwarf ../target/quarkus-reactive-beer-1.0.0-SNAPSHOT-runner -Dquarkus.vertx.event-loops-pool-size=${THREADS}
+  perf script -F +pid > ./startup_firefox.perf
+  # exit this script
+  exit 0
 else
   java ${JFR_ARGS} -Dquarkus.vertx.event-loops-pool-size=${THREADS} -XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints -jar ../target/quarkus-app/quarkus-run.jar &
 fi
@@ -149,7 +161,7 @@ fi
 if [ "${RECORD}" = true ]; then
   echo "----- Collecting perf record on $quarkus_pid"
   # --call-graph dwarf should be able to collect inlined frames as well
-  perf record -e cpu-clock -g -F 100 -p $quarkus_pid &
+  perf record -e cpu-clock --call-graph dwarf -F 100 -p $quarkus_pid &
   stat_pid=$!
 fi
 
